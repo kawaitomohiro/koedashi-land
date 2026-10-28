@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>こえだし・はつおんチャレンジ！(修正版)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts（【修正】フォント名は M+PLUS+Rounded+1c と書く） -->
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #fef3c7 100%);
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+        .bouncy { animation: bounce 1.5s infinite; }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .pop-in { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn {
+            0% { transform: scale(0.7); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col text-slate-800 pb-8">
+
+    <!-- 【修正】マイクが使えない理由を、画面にはっきり出す帯（最初は隠しておく） -->
+    <div id="mic-alert" class="hidden bg-rose-600 text-white px-3 py-2 text-xs shadow-md">
+        <div class="flex items-start justify-between gap-2 max-w-4xl mx-auto">
+            <div class="flex items-start space-x-2">
+                <i class="fa-solid fa-microphone-slash text-amber-300 text-sm mt-0.5"></i>
+                <span id="mic-alert-text" class="font-bold leading-relaxed"></span>
+            </div>
+            <button onclick="openExternal()" class="shrink-0 bg-amber-400 hover:bg-amber-500 text-indigo-950 font-black px-3 py-1 rounded-full text-xs shadow transition">
+                ブラウザでひらく <i class="fa-solid fa-arrow-up-right-from-square ml-1"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- ヘッダー -->
+    <header class="bg-white/90 backdrop-blur-md shadow-sm border-b border-amber-200 sticky top-0 z-40">
+        <div class="max-w-4xl mx-auto px-4 py-2.5 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <div class="w-9 h-9 rounded-xl bg-amber-400 flex items-center justify-center text-white text-lg shadow">
+                    <i class="fa-solid fa-microphone-lines"></i>
+                </div>
+                <h1 class="text-lg md:text-xl font-black text-amber-600 tracking-wide cursor-pointer" onclick="goHome()">こえだしランド</h1>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="btn-go-home" onclick="goHome()" class="hidden bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3 py-1.5 rounded-full border border-slate-300 flex items-center transition">
+                    <i class="fa-solid fa-house mr-1"></i> ホーム
+                </button>
+                <span class="bg-amber-100 text-amber-900 text-xs font-black px-3 py-1.5 rounded-full border border-amber-300 flex items-center">
+                    <i class="fa-solid fa-star text-amber-500 mr-1.5 text-sm"></i><span id="total-stars">0</span> こ
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 mt-4 flex-grow w-full">
+
+        <!-- トップページ（ホーム画面） -->
+        <section id="sec-home" class="space-y-6 pop-in">
+            <div class="bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 rounded-3xl p-6 text-white text-center shadow-lg relative overflow-hidden">
+                <div class="relative z-10">
+                    <span class="bg-white/20 backdrop-blur text-white text-xs font-black px-3 py-1 rounded-full border border-white/30 inline-block mb-2">楽しくお口のトレーニング！</span>
+                    <h2 class="text-2xl md:text-3xl font-black mb-2 tracking-wide">こえだしランドへ ようこそ！</h2>
+                    <p class="text-xs md:text-sm font-bold opacity-90">マイクにむかって 元気に声をだして遊ぼう！</p>
+                </div>
+            </div>
+
+            <!-- 【修正】最初に1回だけマイクを確かめるボタン -->
+            <div class="bg-white rounded-3xl p-4 shadow-md border-4 border-rose-200 flex flex-col md:flex-row items-center justify-between gap-3">
+                <div class="text-sm font-bold text-slate-600">はじめに マイクが つかえるか たしかめよう</div>
+                <div class="flex items-center gap-2">
+                    <button onclick="checkMic()" class="bg-rose-500 hover:bg-rose-600 text-white font-black text-sm px-5 py-2 rounded-full shadow active:scale-95 transition">
+                        <i class="fa-solid fa-microphone mr-1"></i> マイクをためす
+                    </button>
+                    <span id="mic-check-result" class="text-xs font-bold text-slate-500"></span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div onclick="selectMode('word')" class="bg-white rounded-3xl p-5 shadow-md hover:shadow-xl border-4 border-amber-300 transition-all cursor-pointer transform hover:-translate-y-1 flex items-center space-x-4">
+                    <div class="w-16 h-16 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-3xl shrink-0 border-2 border-amber-300">💬</div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <h3 class="text-lg font-black text-slate-800">ひらがな・ことばトレ</h3>
+                            <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">あ行〜わ行</span>
+                        </div>
+                        <p class="text-xs font-bold text-slate-500 mt-1">あいうえおの言葉をひとつずつ発音練習！お手本つき。</p>
+                    </div>
+                </div>
+
+                <div onclick="selectMode('typing')" class="bg-white rounded-3xl p-5 shadow-md hover:shadow-xl border-4 border-indigo-300 transition-all cursor-pointer transform hover:-translate-y-1 flex items-center space-x-4">
+                    <div class="w-16 h-16 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-3xl shrink-0 border-2 border-indigo-300">⌨️</div>
+                    <div>
+                        <h3 class="text-lg font-black text-slate-800">こえタイピング</h3>
+                        <p class="text-xs font-bold text-slate-500 mt-1">制限時間内に言葉をすばやく声に出してポイントゲット！</p>
+                    </div>
+                </div>
+
+                <div onclick="selectMode('breath')" class="bg-white rounded-3xl p-5 shadow-md hover:shadow-xl border-4 border-sky-300 transition-all cursor-pointer transform hover:-translate-y-1 flex items-center space-x-4">
+                    <div class="w-16 h-16 rounded-2xl bg-sky-100 text-sky-600 flex items-center justify-center text-3xl shrink-0 border-2 border-sky-300">🚀</div>
+                    <div>
+                        <h3 class="text-lg font-black text-slate-800">いきっこレース</h3>
+                        <p class="text-xs font-bold text-slate-500 mt-1">「あーーー」と声を長く出して、ロケットを飛ばそう！</p>
+                    </div>
+                </div>
+
+                <div onclick="selectMode('pataka')" class="bg-white rounded-3xl p-5 shadow-md hover:shadow-xl border-4 border-emerald-300 transition-all cursor-pointer transform hover:-translate-y-1 flex items-center space-x-4">
+                    <div class="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl shrink-0 border-2 border-emerald-300">⚡</div>
+                    <div>
+                        <h3 class="text-lg font-black text-slate-800">パタカ れんだ</h3>
+                        <p class="text-xs font-bold text-slate-500 mt-1">「パ・タ・カ」を素早く連打！口唇・舌の集中トレーニング。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- モード1: ことばトレ -->
+        <section id="sec-word" class="hidden bg-white rounded-3xl p-5 shadow-xl border-4 border-amber-300 relative overflow-hidden">
+            <div class="mb-4">
+                <div class="text-xs font-bold text-slate-500 mb-2 text-center">練習したい「ひらがな行」をえらんでね：</div>
+                <div class="flex flex-wrap gap-1.5 items-center justify-center" id="group-buttons-container">
+                    <button data-group="single" class="group-btn">あ〜ん (ひらがな表)</button>
+                    <button data-group="a" class="group-btn">あ行</button>
+                    <button data-group="ka" class="group-btn">か行</button>
+                    <button data-group="sa" class="group-btn">さ行</button>
+                    <button data-group="ta" class="group-btn">た行</button>
+                    <button data-group="na" class="group-btn">な行</button>
+                    <button data-group="ha" class="group-btn">は行</button>
+                    <button data-group="ma" class="group-btn">ま行</button>
+                    <button data-group="ya" class="group-btn">や行</button>
+                    <button data-group="ra" class="group-btn">ら行</button>
+                    <button data-group="wa" class="group-btn">わ行</button>
+                    <button data-group="pataka" class="group-btn">パタカ</button>
+                </div>
+            </div>
+
+            <div id="hiragana-grid-container" class="mb-4 bg-amber-100/60 p-3 rounded-2xl border-2 border-amber-200">
+                <div class="text-[11px] font-black text-amber-900 mb-2 text-center">👇 れんしゅうしたい「ひらがな」をえらんでね！</div>
+                <div id="hiragana-grid" class="grid grid-cols-5 gap-1.5 max-w-sm mx-auto"></div>
+            </div>
+
+            <div class="bg-amber-50/70 rounded-2xl p-5 text-center border-2 border-dashed border-amber-200 relative mb-5">
+                <div class="text-6xl mb-2" id="word-emoji">🍎</div>
+                <div class="text-4xl md:text-5xl font-black text-slate-800 tracking-wider mb-1" id="word-target">あめ</div>
+                <p class="text-xs font-bold text-slate-500 mb-3" id="word-hint">口を大きく開けて言ってみよう！</p>
+                <button onclick="playTargetVoice()" class="inline-flex items-center space-x-1.5 bg-amber-200 hover:bg-amber-300 text-amber-900 font-bold px-3.5 py-1.5 rounded-full text-xs transition">
+                    <i class="fa-solid fa-volume-high"></i>
+                    <span>おてほんをきく</span>
+                </button>
+            </div>
+
+            <div class="flex flex-col items-center justify-center space-y-3">
+                <div class="flex items-center space-x-3">
+                    <button id="btn-mic-word" onclick="toggleWordRecognition()" class="w-20 h-20 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex flex-col items-center justify-center shadow-lg transform active:scale-95 transition border-4 border-rose-200 bouncy">
+                        <i class="fa-solid fa-microphone text-2xl mb-0.5"></i>
+                        <span class="text-[10px] font-black" id="btn-mic-word-label">おす！</span>
+                    </button>
+                    <button onclick="evaluateWordManual()" class="h-20 px-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl text-xs font-black shadow flex flex-col items-center justify-center transition active:scale-95 border-2 border-emerald-300">
+                        <i class="fa-solid fa-check text-lg mb-1"></i>
+                        <span>言えたよ！</span>
+                        <span class="text-[9px] font-normal opacity-90">(おや判定)</span>
+                    </button>
+                </div>
+                <div id="word-status" class="text-xs font-bold text-slate-600 min-h-[1.25rem] text-center">
+                    ボタンをおして、マイクに向かって言ってみよう！
+                </div>
+            </div>
+
+            <div id="word-result-box" class="hidden mt-5 bg-amber-100 rounded-2xl p-4 text-center pop-in border-2 border-amber-300">
+                <div class="flex justify-center items-center space-x-1.5 text-2xl text-amber-500 mb-1" id="result-stars">
+                    <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                </div>
+                <div class="text-xl font-black text-amber-800 mb-1" id="result-title">すごい！大せいかい！</div>
+                <p class="text-xs text-slate-600 font-bold mb-3" id="result-detail">「あめ」ってきこえたよ！</p>
+                <div class="flex justify-center space-x-2">
+                    <button onclick="nextWord()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-5 py-2 rounded-xl shadow transition text-xs">
+                        つぎのことば <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- モード2: こえタイピング -->
+        <section id="sec-typing" class="hidden bg-white rounded-3xl p-5 shadow-xl border-4 border-indigo-300">
+            <div class="text-center mb-3">
+                <h2 class="text-lg font-black text-indigo-700">こえタイピング チャレンジ</h2>
+                <p class="text-xs font-bold text-slate-500">画面のことばをすばやく声に出そう！</p>
+                <div class="mt-2 flex justify-center space-x-2 items-center" id="typing-time-buttons">
+                    <span class="text-xs font-bold text-slate-500">じかん：</span>
+                    <button data-sec="30" class="typing-time-btn">30秒</button>
+                    <button data-sec="60" class="typing-time-btn">60秒</button>
+                    <button data-sec="90" class="typing-time-btn">90秒</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mb-3">
+                <div class="bg-indigo-50 border-2 border-indigo-200 rounded-xl p-2 text-center">
+                    <span class="text-[10px] font-bold text-indigo-600 block">ポイント</span>
+                    <span id="typing-score" class="text-2xl font-black text-indigo-800">0</span> <span class="text-[10px] font-bold text-indigo-600">pt</span>
+                </div>
+                <div class="bg-rose-50 border-2 border-rose-200 rounded-xl p-2 text-center">
+                    <span class="text-[10px] font-bold text-rose-600 block">のこり時間</span>
+                    <span id="typing-timer" class="text-2xl font-black text-rose-600">60</span> <span class="text-[10px] font-bold text-rose-600">秒</span>
+                </div>
+            </div>
+
+            <div class="bg-indigo-900/5 rounded-2xl p-4 text-center border-2 border-dashed border-indigo-300 relative mb-4">
+                <div id="typing-hit-effect" class="hidden absolute top-2 right-4 text-rose-500 text-lg font-black pop-in">+1 pt! 🎯</div>
+                <div class="text-5xl mb-1" id="typing-emoji">🚗</div>
+                <div class="text-3xl font-black text-slate-800 tracking-wider mb-1" id="typing-target">くるま</div>
+                <div class="text-[11px] font-bold text-indigo-600" id="typing-heard">（声を出してね）</div>
+            </div>
+
+            <div class="flex flex-col items-center space-y-2">
+                <div class="flex space-x-2">
+                    <button id="btn-typing-start" onclick="toggleTypingGame()" class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm shadow active:scale-95 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-play"></i>
+                        <span id="btn-typing-text">スタート！</span>
+                    </button>
+                    <button onclick="handleTypingSuccess()" class="px-4 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs shadow active:scale-95 transition">
+                        言えた！(+1pt)
+                    </button>
+                </div>
+                <div id="typing-status" class="text-[11px] font-bold text-slate-500">スタートを押してね！</div>
+            </div>
+
+            <div id="typing-result-box" class="hidden mt-4 bg-indigo-50 rounded-2xl p-4 text-center pop-in border-2 border-indigo-300">
+                <div class="text-2xl font-black text-indigo-900 mb-1">タイムアップ！</div>
+                <p class="text-xs text-slate-600 font-bold mb-3">
+                    <span id="final-typing-score" class="text-2xl font-black text-rose-500">0</span> ポイントゲット！
+                </p>
+                <button onclick="toggleTypingGame()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2 rounded-xl shadow transition text-xs">
+                    もういちど挑戦！
+                </button>
+            </div>
+        </section>
+
+        <!-- モード3: いきっこレース -->
+        <section id="sec-breath" class="hidden bg-white rounded-3xl p-5 shadow-xl border-4 border-sky-300">
+            <div class="text-center mb-3">
+                <h2 class="text-lg font-black text-sky-700">息ながもち！ロケット発射！</h2>
+                <p class="text-xs font-bold text-slate-500">「あーーー」と声を長く出そう！</p>
+            </div>
+            <div class="relative w-full h-56 bg-slate-900 rounded-2xl overflow-hidden border-2 border-sky-400 shadow-inner flex flex-col justify-end">
+                <canvas id="rocket-canvas" class="w-full h-full absolute inset-0"></canvas>
+                <div class="absolute top-2 left-2 bg-white/80 backdrop-blur px-2.5 py-0.5 rounded-full text-[10px] font-bold text-slate-800">
+                    たかさ: <span id="rocket-alt" class="text-sky-600 text-xs font-black">0</span> m
+                </div>
+                <div class="absolute top-2 right-2 bg-white/80 backdrop-blur px-2.5 py-0.5 rounded-full text-[10px] font-bold text-slate-800">
+                    タイム: <span id="rocket-time" class="text-rose-600 text-xs font-black">0.0</span> 秒
+                </div>
+            </div>
+            <canvas id="mic-visualizer" class="w-full h-8 mt-2 rounded-xl bg-slate-900 shadow-inner"></canvas>
+            <div class="mt-4 flex flex-col items-center">
+                <button id="btn-rocket" onclick="toggleRocketGame()" class="px-6 py-3 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-black text-sm shadow active:scale-95 transition">
+                    <span id="btn-rocket-text">スタート！</span>
+                </button>
+                <div id="rocket-status" class="mt-2 text-xs font-bold text-slate-600"></div>
+            </div>
+        </section>
+
+        <!-- モード4: パタカ連打 -->
+        <section id="sec-pataka" class="hidden bg-white rounded-3xl p-5 shadow-xl border-4 border-emerald-300">
+            <div class="text-center mb-3">
+                <h2 class="text-lg font-black text-emerald-700">パタカ れんだチャレンジ！</h2>
+                <p class="text-xs font-bold text-slate-500">5秒間で何回言えるかな？</p>
+            </div>
+            <div class="flex justify-center space-x-2 mb-4" id="pataka-target-buttons">
+                <button data-char="パ" class="pataka-target-btn">パ</button>
+                <button data-char="タ" class="pataka-target-btn">タ</button>
+                <button data-char="カ" class="pataka-target-btn">カ</button>
+            </div>
+            <div class="bg-emerald-50 rounded-2xl p-4 text-center border-2 border-emerald-200 mb-4">
+                <div class="text-[10px] font-bold text-emerald-800 mb-0.5">カウント</div>
+                <div id="pataka-count" class="text-5xl font-black text-emerald-600 mb-1">0</div>
+            </div>
+            <div class="flex flex-col items-center">
+                <button id="btn-pataka-start" onclick="startPatakaChallenge()" class="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-sm shadow active:scale-95 transition">
+                    チャレンジスタート！
+                </button>
+                <div id="pataka-timer" class="mt-2 text-xs font-bold text-slate-600"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // ★ここに、このアプリを公開しているURL（https:// で始まる本当のURL）を入れてください。
+        //   AppSheet の中から「ブラウザでひらく」を押したとき、このURLを Safari / Chrome で開きます。
+        //   空のままだと、いま表示しているURLを開こうとします（AppSheetの中だと失敗することがあります）。
+        const APP_URL = 'https://kawaitomohiro.github.io/koedashi-land/';
+
+        let currentStars = 0;
+        let selectedGroup = 'single';
+        let currentWordIndex = 0;
+        let currentMode = 'home';
+
+        // ============================================================
+        // 【修正の中心】マイクが使えるかどうかを調べて、理由を画面に出す
+        // ============================================================
+        function isInIframe() {
+            try { return window.self !== window.top; } catch (e) { return true; }
+        }
+
+        // 「このページの外側の枠が、マイクを禁止していないか」を調べる（Chrome系で使える）
+        function microphoneBlockedByFrame() {
+            const policy = document.permissionsPolicy || document.featurePolicy;
+            if (policy && typeof policy.allowsFeature === 'function') {
+                return !policy.allowsFeature('microphone');
+            }
+            return false; // 調べられないブラウザでは「分からない」扱い
+        }
+
+        // AppSheet などアプリ内ブラウザかどうか（目安）
+        function isInAppBrowser() {
+            const ua = navigator.userAgent || '';
+            return /AppSheet|; wv\)|FBAN|FBAV|Line\/|Instagram/i.test(ua);
+        }
+
+        // 起動したとき、ボタンを押す前に分かる問題を先に知らせる
+        function precheckEnvironment() {
+            if (!window.isSecureContext) {
+                return 'このページは https で開かれていないため、マイクが使えません。https:// のURLで開いてください。';
+            }
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                return 'このブラウザ（アプリの中の画面）はマイクに対応していません。「ブラウザでひらく」を押して、Safari か Chrome で開いてください。';
+            }
+            if (isInIframe() && microphoneBlockedByFrame()) {
+                return 'このページは、ほかのアプリの枠の中に表示されていて、マイクが禁止されています。「ブラウザでひらく」を押してください。';
+            }
+            if (isInAppBrowser()) {
+                return 'アプリの中の画面ではマイクの許可が出ないことがあります。うまくいかない時は「ブラウザでひらく」を押してください。';
+            }
+            return '';
+        }
+
+        function showMicAlert(msg) {
+            const bar = document.getElementById('mic-alert');
+            const text = document.getElementById('mic-alert-text');
+            if (!bar || !text) return;
+            if (msg) {
+                text.innerText = msg;
+                bar.classList.remove('hidden');
+            } else {
+                bar.classList.add('hidden');
+            }
+        }
+
+        // getUserMedia の失敗理由を、子ども・保護者に分かる言葉にする
+        function explainMicError(err) {
+            const name = err && err.name ? err.name : '';
+            if (name === 'NotAllowedError' || name === 'SecurityError') {
+                if (isInIframe() || isInAppBrowser()) {
+                    return 'アプリの中ではマイクが止められています（許可の画面も出ません）。「ブラウザでひらく」を押して、Safari か Chrome で開いてください。';
+                }
+                return 'マイクが「許可しない」になっています。アドレスバーの左のマーク（またはiPadの「設定」→Safari→マイク）で「許可」にしてから、ページを開き直してください。';
+            }
+            if (name === 'NotFoundError') return 'マイクが見つかりません。マイクつきの端末か、イヤホンマイクをつないでください。';
+            if (name === 'NotReadableError') return 'ほかのアプリがマイクを使っています。ほかのアプリを閉じてから、もういちど押してください。';
+            return 'マイクが起動できませんでした（' + (name || '原因不明') + '）。「ブラウザでひらく」を押してください。';
+        }
+
+        // --- オーディオ（音の大きさをはかる：ロケット・パタカ用） ---
+        let audioCtx = null;
+        let analyser = null;
+        let microphoneStream = null;
+        let dataArray = null;
+        let visualizerStarted = false;
+
+        // 【修正】失敗を握りつぶさず、理由を返す。ボタンを押した瞬間に呼ぶこと。
+        async function setupAudio() {
+            if (analyser && microphoneStream && microphoneStream.active) {
+                if (audioCtx.state === 'suspended') await audioCtx.resume();
+                return { ok: true };
+            }
+            const pre = precheckEnvironment();
+            if (pre && !navigator.mediaDevices) {
+                showMicAlert(pre);
+                return { ok: false, message: pre };
+            }
+            try {
+                // getUserMedia を先に呼ぶ（ここで「許可しますか？」が出る）
+                microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                const AC = window.AudioContext || window.webkitAudioContext;
+                if (!audioCtx) audioCtx = new AC();
+                if (audioCtx.state === 'suspended') await audioCtx.resume();
+                const source = audioCtx.createMediaStreamSource(microphoneStream);
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 256;
+                source.connect(analyser);
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+                startMicVisualizer();
+                showMicAlert('');
+                return { ok: true };
+            } catch (err) {
+                console.warn('マイクを取得できませんでした:', err);
+                const msg = explainMicError(err);
+                showMicAlert(msg);
+                return { ok: false, message: msg };
+            }
+        }
+
+        // 【修正】音声認識を使う前に、音の大きさ用のマイクを手放す
+        //  （Androidでは2つが同時にマイクを取り合い、音声認識が何も返さなくなる）
+        function releaseAudio() {
+            if (microphoneStream) {
+                microphoneStream.getTracks().forEach(t => t.stop());
+                microphoneStream = null;
+            }
+            analyser = null;
+        }
+
+        function getVolume() {
+            if (!analyser || !dataArray) return 0;
+            analyser.getByteFrequencyData(dataArray);
+            let sum = 0;
+            for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+            return sum / dataArray.length;
+        }
+
+        function startMicVisualizer() {
+            if (visualizerStarted) return;
+            const canvas = document.getElementById('mic-visualizer');
+            if (!canvas) return;
+            visualizerStarted = true;
+            const ctx = canvas.getContext('2d');
+            function draw() {
+                requestAnimationFrame(draw);
+                canvas.width = canvas.clientWidth || 300;
+                canvas.height = canvas.clientHeight || 32;
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                if (!analyser || !dataArray) return;
+                analyser.getByteFrequencyData(dataArray);
+                const barWidth = (canvas.width / dataArray.length) * 2.5;
+                let x = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                    const barHeight = (dataArray[i] / 255) * canvas.height;
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                    x += barWidth + 1;
+                }
+            }
+            draw();
+        }
+
+        // ホームの「マイクをためす」
+        async function checkMic() {
+            const out = document.getElementById('mic-check-result');
+            out.innerText = 'たしかめています…';
+            const r = await setupAudio();
+            if (r.ok) {
+                out.innerText = 'OK！マイクがつかえます';
+                out.className = 'text-xs font-bold text-emerald-600';
+                releaseAudio();
+            } else {
+                out.innerText = 'つかえません（上の赤い帯を見てね）';
+                out.className = 'text-xs font-bold text-rose-600';
+            }
+        }
+
+        // 【修正】AppSheet の中から外のブラウザで開く
+        function openExternal() {
+            const url = APP_URL || window.location.href;
+            if (!/^https:/.test(url)) {
+                showMicAlert('外のブラウザで開くURLが分かりません。作った人は、プログラムの APP_URL に公開URLを入れてください。');
+                return;
+            }
+            const w = window.open(url, '_blank', 'noopener');
+            if (!w) {
+                // ポップアップが止められた時は、そのページごと移動する
+                try { window.top.location.href = url; } catch (e) { window.location.href = url; }
+            }
+        }
+
+        // --- モード切替 ---
+        function selectMode(mode) {
+            currentMode = mode;
+            ['sec-home', 'sec-word', 'sec-typing', 'sec-breath', 'sec-pataka'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
+            const target = document.getElementById('sec-' + mode);
+            if (target) target.classList.remove('hidden');
+            const homeBtn = document.getElementById('btn-go-home');
+            if (homeBtn) homeBtn.classList.toggle('hidden', mode === 'home');
+            if (mode === 'breath') setTimeout(initRocketCanvas, 100);
+        }
+
+        function goHome() {
+            if (isTypingActive) stopTypingGame(true);
+            if (isRocketActive) stopRocketGame();
+            if (patakaTimer) stopPataka();
+            if (wordRecognition) { try { wordRecognition.abort(); } catch (e) {} }
+            isWordRecognizing = false;
+            updateWordMicButton();
+            releaseAudio();
+            selectMode('home');
+        }
+
+        // --- データ ---
+        const hiraganaList = [
+            'あ','い','う','え','お',
+            'か','き','く','け','こ',
+            'さ','し','す','せ','そ',
+            'た','ち','つ','て','と',
+            'な','に','ぬ','ね','の',
+            'は','ひ','ふ','へ','ほ',
+            'ま','み','む','め','も',
+            'や','','ゆ','','よ',
+            'ら','り','る','れ','ろ',
+            'わ','を','ん','',''
+        ];
+
+        const singleCharDetails = {
+            'あ': { emoji: '👄', hint: '口を縦に大きくあけて「あー」！' },
+            'い': { emoji: '😁', hint: '口を横に「いー」とひっぱろう！' },
+            'う': { emoji: '😗', hint: '口をすこしまるくして「うー」！' },
+            'え': { emoji: '😄', hint: 'にっこり顔で「えー」！' },
+            'お': { emoji: '😮', hint: '丸い口をつくって「おー」！' },
+            'か': { emoji: '🗣️', hint: 'のどの奥から「カッ」とはじこう！' },
+            'き': { emoji: '✨', hint: '「い」の口でのどの奥から「き」！' },
+            'く': { emoji: '🐦', hint: '口をすぼめて「くー」！' },
+            'け': { emoji: '🎁', hint: '舌の奥をしっかり動かそう！' },
+            'こ': { emoji: '📦', hint: '「こ」の音をすばやく！' },
+            'さ': { emoji: '💨', hint: '歯の間から息をすーっと出そう！' },
+            'し': { emoji: '🤫', hint: '静かに息をはき出してみよう！' },
+            'す': { emoji: '🍉', hint: '口をすこし開けてすーっと！' },
+            'せ': { emoji: '🧼', hint: '前歯を意識して発声しよう！' },
+            'そ': { emoji: '☁️', hint: '「そ」の音を出してみよう！' },
+            'た': { emoji: '👅', hint: '舌のさきを上の歯のうしろにつけて「た」！' },
+            'ち': { emoji: '🧀', hint: '「い」の口で舌をタッチ！' },
+            'つ': { emoji: '🌱', hint: '「つ」の音をしっかり！' },
+            'て': { emoji: '✋', hint: '舌のはじきを意識しよう！' },
+            'と': { emoji: '⏰', hint: '「と」の音を元気に！' },
+            'な': { emoji: '🍆', hint: '鼻から声を通してみよう！' },
+            'に': { emoji: '🥕', hint: '「に」の音をしっかり！' },
+            'ぬ': { emoji: '🧸', hint: '「ぬ」の音を発声してみよう！' },
+            'ね': { emoji: '🐱', hint: 'にゃーの「ね」だよ！' },
+            'の': { emoji: '🍙', hint: '「の」の音を出してみよう！' },
+            'は': { emoji: '🌸', hint: 'お腹から「ハッ」と息を出そう！' },
+            'ひ': { emoji: '✈️', hint: '「ひ」の息を意識しよう！' },
+            'ふ': { emoji: '🎈', hint: 'くちびるをすこしすぼめてね！' },
+            'へ': { emoji: '🐍', hint: '「へ」の音を出してみよう！' },
+            'ほ': { emoji: '⭐️', hint: '「ほ」の音を元気に！' },
+            'ま': { emoji: '🍓', hint: 'くちびるを閉じてから開こう！' },
+            'み': { emoji: '🍊', hint: '「み」の口を横にひっぱろう！' },
+            'む': { emoji: '🐛', hint: 'しっかり口を閉じよう！' },
+            'め': { emoji: '👓', hint: '「め」の音を言ってみよう！' },
+            'も': { emoji: '🍑', hint: 'まみむめもの「も」だよ！' },
+            'や': { emoji: '⛰️', hint: '「や」の音を大きく！' },
+            'ゆ': { emoji: '❄️', hint: '「ゆ」の口のかたちを意識！' },
+            'よ': { emoji: '⛵', hint: '口をまるくして発声！' },
+            'ら': { emoji: '🎺', hint: '舌のさきをうえにはじこう！' },
+            'り': { emoji: '🍎', hint: '舌のタッチを意識してみよう！' },
+            'る': { emoji: '💎', hint: '「る」の音を出してみよう！' },
+            'れ': { emoji: '🍋', hint: '「れ」の音をすばやく！' },
+            'ろ': { emoji: '🤖', hint: '「ろ」の音をはっきりと！' },
+            'わ': { emoji: '🐊', hint: '「わ」の口を大きく開けよう！' },
+            'を': { emoji: '🎒', hint: '「お」と同じ口で発音してみよう！' },
+            'ん': { emoji: '🤐', hint: '口を閉じて「んー」！' }
+        };
+
+        let selectedSingleChar = 'あ';
+
+        // 【修正】reading = 音声認識はひらがな・カタカナ・漢字のどれで返すか分からないので、判定用の別の書き方も持たせる
+        const wordList = {
+            a: [
+                { word: 'あめ', emoji: '🍬', hint: '口を大きめにあけて言ってみよう！', alt: ['雨', '飴', 'アメ'] },
+                { word: 'いぬ', emoji: '🐶', hint: '「い」は横に口をひっぱってね', alt: ['犬', 'イヌ'] },
+                { word: 'うし', emoji: '🐮', hint: '口をすこしまるくしてみよう', alt: ['牛', 'ウシ'] },
+                { word: 'えのぐ', emoji: '🎨', hint: 'はっきり「え」と言ってみよう', alt: ['絵の具', '絵具'] },
+                { word: 'おにぎり', emoji: '🍙', hint: '口を大きくあけて言ってみよう！', alt: ['お握り', 'オニギリ'] }
+            ],
+            ka: [
+                { word: 'かさ', emoji: '☂️', hint: 'のどの奥から「カッ」！', alt: ['傘', 'カサ'] },
+                { word: 'きりん', emoji: '🦒', hint: '「き」の音を元気に！', alt: ['キリン', '麒麟'] },
+                { word: 'くり', emoji: '🌰', hint: 'くちびるを意識してみよう', alt: ['栗', 'クリ'] },
+                { word: 'ケーキ', emoji: '🍰', hint: 'のどの奥をつかおう', alt: ['けーき'] },
+                { word: 'こあら', emoji: '🐨', hint: '「こ」の音をしっかり！', alt: ['コアラ'] }
+            ],
+            sa: [
+                { word: 'さかな', emoji: '🐟', hint: '前歯の間から「サッ」と息を出そう', alt: ['魚', 'サカナ'] },
+                { word: 'しんかんせん', emoji: '🚅', hint: 'しずかに息を出してみよう', alt: ['新幹線'] },
+                { word: 'すいか', emoji: '🍉', hint: 'すーっと息をはいてみよう', alt: ['スイカ', '西瓜'] },
+                { word: 'せんぷうき', emoji: '🌀', hint: '「せ」の音をはっきりと！', alt: ['扇風機'] },
+                { word: 'そら', emoji: '☁️', hint: '「そ」の音を出してみよう', alt: ['空', 'ソラ'] }
+            ],
+            ta: [
+                { word: 'たいよう', emoji: '☀️', hint: '舌のさきをうえの前歯のうしろへ', alt: ['太陽'] },
+                { word: 'チーズ', emoji: '🧀', hint: 'いーの口で発音してみよう', alt: ['ちーず'] },
+                { word: 'つくし', emoji: '🌱', hint: '「つ」の音をしっかり！', alt: ['ツクシ', '土筆'] },
+                { word: 'てんとうむし', emoji: '🐞', hint: '舌のタッチを意識しよう', alt: ['テントウムシ', 'てんとう虫'] },
+                { word: 'とけい', emoji: '⏰', hint: '「と」の音を元気に！', alt: ['時計', 'トケイ'] }
+            ],
+            na: [
+                { word: 'なす', emoji: '🍆', hint: '鼻から声を通してみよう', alt: ['ナス', '茄子'] },
+                { word: 'にんじん', emoji: '🥕', hint: '「に」の音をしっかり！', alt: ['人参', 'ニンジン'] },
+                { word: 'ぬいぐるみ', emoji: '🧸', hint: '「ぬ」の音を発声してみよう', alt: ['ぬいぐるみ', 'ヌイグルミ'] },
+                { word: 'ねこ', emoji: '🐱', hint: 'にゃーの「ね」だよ', alt: ['猫', 'ネコ'] },
+                { word: 'のり', emoji: '🍙', hint: '「の」の音を出してみよう', alt: ['海苔', 'ノリ', '糊'] }
+            ],
+            ha: [
+                { word: 'はな', emoji: '🌸', hint: 'お腹から「ハッ」と息を出そう', alt: ['花', '鼻', 'ハナ'] },
+                { word: 'ひこうき', emoji: '✈️', hint: '「ひ」の息を意識しよう', alt: ['飛行機'] },
+                { word: 'ふね', emoji: '🚢', hint: 'くちびるをすこしすぼめてね', alt: ['船', '舟', 'フネ'] },
+                { word: 'へび', emoji: '🐍', hint: '「へ」の音を出してみよう', alt: ['蛇', 'ヘビ'] },
+                { word: 'ほし', emoji: '⭐️', hint: '「ほ」の音を元気に！', alt: ['星', 'ホシ'] }
+            ],
+            ma: [
+                { word: 'まど', emoji: '🪟', hint: 'くちびるを閉じてから「ま」！', alt: ['窓', 'マド'] },
+                { word: 'みかん', emoji: '🍊', hint: 'くちびるを閉じてから「み」！', alt: ['蜜柑', 'ミカン'] },
+                { word: 'むし', emoji: '🐛', hint: 'しっかり口を閉じよう', alt: ['虫', 'ムシ'] },
+                { word: 'めがね', emoji: '👓', hint: '「め」の音を言ってみよう', alt: ['眼鏡', 'メガネ'] },
+                { word: 'もも', emoji: '🍑', hint: 'まみむめもの「も」だよ', alt: ['桃', 'モモ'] }
+            ],
+            ya: [
+                { word: 'やま', emoji: '⛰️', hint: '「や」の音を大きく！', alt: ['山', 'ヤマ'] },
+                { word: 'ゆき', emoji: '❄️', hint: '「ゆ」の口のかたちを意識！', alt: ['雪', 'ユキ'] },
+                { word: 'ようふく', emoji: '👕', hint: '口をまるくして「よ」！', alt: ['洋服'] }
+            ],
+            ra: [
+                { word: 'ラッパ', emoji: '🎺', hint: '舌のさきをうえにはじこう！', alt: ['らっぱ', '喇叭'] },
+                { word: 'りんご', emoji: '🍎', hint: '舌のタッチを意識してみよう', alt: ['林檎', 'リンゴ'] },
+                { word: 'ルビー', emoji: '💎', hint: '「る」の音を出してみよう', alt: ['るびー'] },
+                { word: 'レモン', emoji: '🍋', hint: '「れ」の音をすばやく！', alt: ['れもん', '檸檬'] },
+                { word: 'ロボット', emoji: '🤖', hint: '「ろ」の音をはっきりと！', alt: ['ろぼっと'] }
+            ],
+            wa: [
+                { word: 'わに', emoji: '🐊', hint: '「わ」の口を大きく開けよう', alt: ['ワニ', '鰐'] },
+                { word: 'わんこ', emoji: '🐶', hint: '元気に声をだそう', alt: ['ワンコ'] }
+            ],
+            pataka: [
+                { word: 'パン', emoji: '🥐', hint: 'くちびるを「パッ」とはじこう！', alt: ['ぱん'] },
+                { word: 'パイナップル', emoji: '🍍', hint: 'パ・プの音をきれいに！', alt: ['ぱいなっぷる'] },
+                { word: 'たまご', emoji: '🥚', hint: '舌のさきを上にタッチ！', alt: ['卵', '玉子', 'タマゴ'] },
+                { word: 'カメラ', emoji: '📷', hint: 'のどの奥から「カッ」！', alt: ['かめら'] }
+            ]
+        };
+
+        // カタカナ→ひらがなにそろえ、空白・記号を取って比べる
+        function normalizeKana(s) {
+            return (s || '')
+                .replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60))
+                .replace(/[\s、。！？!?ー・]/g, '');
+        }
+
+        function isMatch(heard, item) {
+            const h = normalizeKana(heard);
+            if (!h) return false;
+            const candidates = [item.word].concat(item.alt || []).map(normalizeKana);
+            return candidates.some(c => c && (h.includes(c) || c.includes(h)));
+        }
+
+        // --- ことばトレ画面 ---
+        function renderHiraganaGrid() {
+            const grid = document.getElementById('hiragana-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            hiraganaList.forEach(char => {
+                if (char === '') { grid.appendChild(document.createElement('div')); return; }
+                const btn = document.createElement('button');
+                const isSelected = char === selectedSingleChar;
+                btn.className = 'w-full aspect-square rounded-xl text-sm font-black flex items-center justify-center transition active:scale-90 shadow-sm ' + (
+                    isSelected
+                        ? 'bg-amber-500 text-white ring-2 ring-amber-400 border-2 border-amber-600 scale-105'
+                        : 'bg-white hover:bg-amber-50 text-slate-800 border border-amber-200');
+                btn.innerText = char;
+                btn.onclick = () => selectSingleHiragana(char);
+                grid.appendChild(btn);
+            });
+        }
+
+        function selectSingleHiragana(char) {
+            selectedSingleChar = char;
+            renderHiraganaGrid();
+            updateWordDisplay();
+        }
+
+        // 【修正】ボタンの光り方を event に頼らず、data-group で決める（iPad等で event が無いと固まる）
+        function renderGroupButtons() {
+            document.querySelectorAll('#group-buttons-container .group-btn').forEach(btn => {
+                const active = btn.dataset.group === selectedGroup;
+                btn.className = 'group-btn font-bold text-xs px-3 py-1.5 rounded-xl ' + (active
+                    ? 'bg-amber-400 text-white shadow'
+                    : 'bg-amber-50 text-amber-800 border border-amber-200');
+            });
+        }
+
+        function changeWordGroup(group) {
+            selectedGroup = group;
+            currentWordIndex = 0;
+            document.getElementById('hiragana-grid-container').classList.toggle('hidden', group !== 'single');
+            renderGroupButtons();
+            updateWordDisplay();
+        }
+
+        function currentWordItem() {
+            if (selectedGroup === 'single') return { word: selectedSingleChar, alt: [] };
+            const list = wordList[selectedGroup] || wordList.a;
+            return list[currentWordIndex];
+        }
+
+        function updateWordDisplay() {
+            if (selectedGroup === 'single') {
+                const d = singleCharDetails[selectedSingleChar] || { emoji: '🗣️', hint: '声をだしてみよう！' };
+                document.getElementById('word-emoji').innerText = d.emoji;
+                document.getElementById('word-target').innerText = selectedSingleChar;
+                document.getElementById('word-hint').innerText = d.hint;
+            } else {
+                const item = currentWordItem();
+                if (item) {
+                    document.getElementById('word-emoji').innerText = item.emoji;
+                    document.getElementById('word-target').innerText = item.word;
+                    document.getElementById('word-hint').innerText = item.hint;
+                }
+            }
+            document.getElementById('word-result-box').classList.add('hidden');
+        }
+
+        function playTargetVoice() {
+            const item = currentWordItem();
+            if ('speechSynthesis' in window && item) {
+                window.speechSynthesis.cancel();
+                const uttr = new SpeechSynthesisUtterance(item.word);
+                uttr.lang = 'ja-JP';
+                window.speechSynthesis.speak(uttr);
+            }
+        }
+
+        // --- ことばトレ（音声認識） ---
+        let isWordRecognizing = false;
+        let wordRecognition = null;
+
+        function updateWordMicButton() {
+            const label = document.getElementById('btn-mic-word-label');
+            if (label) label.innerText = isWordRecognizing ? 'きいてるよ' : 'おす！';
+        }
+
+        function speechErrorMessage(code) {
+            if (code === 'not-allowed' || code === 'service-not-allowed') {
+                return (isInIframe() || isInAppBrowser())
+                    ? 'アプリの中ではマイクが止められています。上の「ブラウザでひらく」を押してね。'
+                    : 'マイクが「許可しない」になっています。ブラウザの設定で許可してね。';
+            }
+            if (code === 'audio-capture') return 'マイクが使えませんでした。ほかのアプリを閉じてもういちど押してね。';
+            if (code === 'network') return 'インターネットにつながっていないと聞き取れません。';
+            if (code === 'no-speech') return '声が聞こえなかったよ。もういちど押して言ってみよう！';
+            return 'うまく聞き取れなかったよ。「言えたよ！」ボタンでも遊べるよ！';
+        }
+
+        // 【修正】ここでは getUserMedia を使わない。音声認識だけにマイクを渡す。
+        //  ・await を挟まず、押した瞬間に start() する（iPadのSafariは、押した直後でないと許可画面を出さない）
+        function toggleWordRecognition() {
+            const status = document.getElementById('word-status');
+            if (isWordRecognizing) {
+                if (wordRecognition) { try { wordRecognition.stop(); } catch (e) {} }
+                isWordRecognizing = false;
+                updateWordMicButton();
+                status.innerText = 'マイクを停止しました。';
+                return;
+            }
+
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SR) {
+                const msg = isInAppBrowser() || isInIframe()
+                    ? 'アプリの中の画面では声の聞き取りが使えません。上の「ブラウザでひらく」を押してね。'
+                    : 'このブラウザは声の聞き取りに対応していません。Chrome か Safari で開いてね。「言えたよ！」ボタンでも遊べるよ！';
+                status.innerText = msg;
+                showMicAlert(msg);
+                return;
+            }
+
+            releaseAudio();
+            wordRecognition = new SR();
+            wordRecognition.lang = 'ja-JP';
+            wordRecognition.interimResults = false;
+            wordRecognition.maxAlternatives = 5;
+
+            wordRecognition.onstart = () => {
+                isWordRecognizing = true;
+                updateWordMicButton();
+                status.innerText = 'きいているよ... 声を出してね！';
+            };
+            wordRecognition.onresult = (e) => {
+                // 候補を全部見て、1つでも合えばOK
+                const alts = Array.from(e.results[0]).map(a => a.transcript);
+                status.innerText = 'きこえた言葉: 「' + alts[0] + '」';
+                evaluateWordSpeech(alts);
+            };
+            wordRecognition.onerror = (e) => {
+                const msg = speechErrorMessage(e.error);
+                status.innerText = msg;
+                if (e.error === 'not-allowed' || e.error === 'service-not-allowed') showMicAlert(msg);
+                isWordRecognizing = false;
+                updateWordMicButton();
+            };
+            wordRecognition.onend = () => {
+                isWordRecognizing = false;
+                updateWordMicButton();
+            };
+
+            try {
+                wordRecognition.start();
+            } catch (e) {
+                status.innerText = 'マイクが起動できませんでした。上の「ブラウザでひらく」を押すか「言えたよ！」を押してね！';
+            }
+        }
+
+        function evaluateWordSpeech(heardList) {
+            const item = currentWordItem();
+            const resultBox = document.getElementById('word-result-box');
+            const resultTitle = document.getElementById('result-title');
+            const resultDetail = document.getElementById('result-detail');
+            resultBox.classList.remove('hidden');
+            const hit = heardList.find(h => isMatch(h, item));
+            if (hit) {
+                resultTitle.innerText = 'すごい！大せいかい！';
+                resultDetail.innerText = '「' + hit + '」ってきれいにきこえたよ！';
+                addStars(3);
+            } else {
+                resultTitle.innerText = 'おしい！よくがんばったね！';
+                resultDetail.innerText = '「' + heardList[0] + '」ってきこえたよ！もういちど言ってみよう！';
+                addStars(1);
+            }
+        }
+
+        function evaluateWordManual() {
+            const item = currentWordItem();
+            document.getElementById('word-result-box').classList.remove('hidden');
+            document.getElementById('result-title').innerText = 'ハナマル！ばっちり言えたね！';
+            document.getElementById('result-detail').innerText = '「' + item.word + '」の練習クリア！';
+            addStars(3);
+        }
+
+        function nextWord() {
+            if (selectedGroup === 'single') {
+                const valid = hiraganaList.filter(c => c !== '');
+                selectSingleHiragana(valid[(valid.indexOf(selectedSingleChar) + 1) % valid.length]);
+            } else {
+                const list = wordList[selectedGroup] || wordList.a;
+                currentWordIndex = (currentWordIndex + 1) % list.length;
+                updateWordDisplay();
+            }
+        }
+
+        // --- こえタイピング ---
+        let isTypingActive = false;
+        let typingScore = 0;
+        let typingSelectedTime = 60;
+        let typingTimeLeft = 60;
+        let typingTimerId = null;
+        let typingRecognition = null;
+        let typingItem = null;
+
+        // 全部の行のことばから出題する
+        const typingPool = Object.keys(wordList).reduce((all, k) => all.concat(wordList[k]), []);
+
+        function nextTypingWord() {
+            let next;
+            do { next = typingPool[Math.floor(Math.random() * typingPool.length)]; }
+            while (typingPool.length > 1 && next === typingItem);
+            typingItem = next;
+            document.getElementById('typing-emoji').innerText = typingItem.emoji;
+            document.getElementById('typing-target').innerText = typingItem.word;
+        }
+
+        function renderTypingTimeButtons() {
+            document.querySelectorAll('.typing-time-btn').forEach(btn => {
+                const active = Number(btn.dataset.sec) === typingSelectedTime;
+                btn.className = 'typing-time-btn text-xs font-bold px-2.5 py-0.5 rounded-full ' + (active
+                    ? 'bg-indigo-600 text-white shadow'
+                    : 'border border-indigo-300 bg-white text-indigo-700');
+            });
+        }
+
+        function setTypingTime(sec) {
+            if (isTypingActive) return;
+            typingSelectedTime = sec;
+            document.getElementById('typing-timer').innerText = sec;
+            renderTypingTimeButtons();
+        }
+
+        function startTypingRecognition() {
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const status = document.getElementById('typing-status');
+            if (!SR) {
+                status.innerText = 'このブラウザでは声の聞き取りが使えません。「言えた！」ボタンで遊べるよ。';
+                return;
+            }
+            typingRecognition = new SR();
+            typingRecognition.lang = 'ja-JP';
+            typingRecognition.continuous = true;
+            typingRecognition.interimResults = false;
+            typingRecognition.maxAlternatives = 5;
+            typingRecognition.onresult = (e) => {
+                const res = e.results[e.results.length - 1];
+                const alts = Array.from(res).map(a => a.transcript);
+                document.getElementById('typing-heard').innerText = 'きこえた声: 「' + alts[0] + '」';
+                // 【修正】画面のことばと合った時だけ点が入る
+                if (alts.some(a => isMatch(a, typingItem))) handleTypingSuccess();
+            };
+            typingRecognition.onerror = (e) => {
+                if (e.error === 'no-speech') return;
+                const msg = speechErrorMessage(e.error);
+                status.innerText = msg;
+                if (e.error === 'not-allowed' || e.error === 'service-not-allowed') showMicAlert(msg);
+            };
+            // 【修正】スマホは数秒で勝手に止まるので、ゲーム中はつなぎ直す
+            typingRecognition.onend = () => {
+                if (isTypingActive) { try { typingRecognition.start(); } catch (e) {} }
+            };
+            try {
+                typingRecognition.start();
+                status.innerText = 'きいているよ！';
+            } catch (e) {
+                status.innerText = 'マイクが起動できませんでした。「言えた！」ボタンで遊べるよ。';
+            }
+        }
+
+        function toggleTypingGame() {
+            if (isTypingActive) { stopTypingGame(); return; }
+            releaseAudio();
+            isTypingActive = true;
+            typingScore = 0;
+            typingTimeLeft = typingSelectedTime;
+            document.getElementById('typing-score').innerText = 0;
+            document.getElementById('typing-timer').innerText = typingTimeLeft;
+            document.getElementById('typing-result-box').classList.add('hidden');
+            document.getElementById('btn-typing-text').innerText = 'ストップ';
+            nextTypingWord();
+            startTypingRecognition(); // await を挟まずに start（押した直後に呼ぶ）
+
+            typingTimerId = setInterval(() => {
+                typingTimeLeft--;
+                document.getElementById('typing-timer').innerText = typingTimeLeft;
+                if (typingTimeLeft <= 0) stopTypingGame();
+            }, 1000);
+        }
+
+        function stopTypingGame(silent) {
+            isTypingActive = false;
+            if (typingTimerId) clearInterval(typingTimerId);
+            typingTimerId = null;
+            if (typingRecognition) { try { typingRecognition.abort(); } catch (e) {} }
+            typingRecognition = null;
+            document.getElementById('btn-typing-text').innerText = 'スタート！';
+            document.getElementById('typing-status').innerText = 'スタートを押してね！';
+            if (!silent) {
+                document.getElementById('final-typing-score').innerText = typingScore;
+                document.getElementById('typing-result-box').classList.remove('hidden');
+            }
+        }
+
+        function handleTypingSuccess() {
+            if (!isTypingActive) return;
+            typingScore++;
+            document.getElementById('typing-score').innerText = typingScore;
+            addStars(1);
+            const effect = document.getElementById('typing-hit-effect');
+            effect.classList.remove('hidden');
+            setTimeout(() => effect.classList.add('hidden'), 600);
+            nextTypingWord();
+        }
+
+        // --- いきっこレース ---
+        let isRocketActive = false;
+        let rocketInterval = null;
+
+        function initRocketCanvas() {
+            const canvas = document.getElementById('rocket-canvas');
+            if (!canvas) return;
+            canvas.width = canvas.clientWidth || 300;
+            canvas.height = canvas.clientHeight || 200;
+        }
+
+        function stopRocketGame() {
+            isRocketActive = false;
+            if (rocketInterval) clearInterval(rocketInterval);
+            rocketInterval = null;
+            document.getElementById('btn-rocket-text').innerText = 'スタート！';
+        }
+
+        async function toggleRocketGame() {
+            if (isRocketActive) { stopRocketGame(); return; }
+            const status = document.getElementById('rocket-status');
+            const r = await setupAudio();
+            if (!r.ok) { status.innerText = r.message; return; }
+            status.innerText = '';
+            isRocketActive = true;
+            document.getElementById('btn-rocket-text').innerText = 'ストップ！';
+
+            let alt = 0;
+            let time = 0;
+            const canvas = document.getElementById('rocket-canvas');
+            const ctx = canvas.getContext('2d');
+
+            rocketInterval = setInterval(() => {
+                const avg = getVolume();
+                if (avg > 15) { time += 0.1; alt += Math.round(avg / 4); }
+                document.getElementById('rocket-time').innerText = time.toFixed(1);
+                document.getElementById('rocket-alt').innerText = alt;
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                const y = Math.max(30, canvas.height - (alt % (canvas.height - 40)));
+                ctx.font = '24px sans-serif';
+                ctx.fillText('🚀', canvas.width / 2 - 12, y);
+            }, 100);
+        }
+
+        // --- パタカ連打 ---
+        // 【修正】元のコードは数を数える処理が無く、いつも0回だった。
+        //  音の大きさの「山」を1回と数える（文字の聞き分けはしない。パ・タ・カどれでも数える）
+        let patakaTarget = 'パ';
+        let patakaTimer = null;
+        let patakaLoop = null;
+
+        function renderPatakaButtons() {
+            document.querySelectorAll('.pataka-target-btn').forEach(btn => {
+                const active = btn.dataset.char === patakaTarget;
+                btn.className = 'pataka-target-btn font-black text-base w-12 h-12 rounded-xl shadow border-2 ' + (active
+                    ? 'bg-emerald-500 text-white border-emerald-300'
+                    : 'bg-slate-200 text-slate-700 border-slate-300');
+            });
+        }
+
+        function setPatakaTarget(char) {
+            if (patakaTimer) return;
+            patakaTarget = char;
+            renderPatakaButtons();
+        }
+
+        function stopPataka() {
+            if (patakaTimer) clearInterval(patakaTimer);
+            if (patakaLoop) cancelAnimationFrame(patakaLoop);
+            patakaTimer = null;
+            patakaLoop = null;
+            document.getElementById('btn-pataka-start').disabled = false;
+        }
+
+        async function startPatakaChallenge() {
+            if (patakaTimer) return; // 連打で2重に始めない
+            const timerEl = document.getElementById('pataka-timer');
+            const r = await setupAudio();
+            if (!r.ok) { timerEl.innerText = r.message; return; }
+
+            let count = 0;
+            let time = 5;
+            let loud = false;
+            const HIGH = 35, LOW = 18; // 大きい→小さいに戻ったら1回
+            document.getElementById('pataka-count').innerText = 0;
+            document.getElementById('btn-pataka-start').disabled = true;
+            timerEl.innerText = 'のこり: ' + time + '秒　「' + patakaTarget + '」をくりかえして！';
+
+            const tick = () => {
+                const v = getVolume();
+                if (!loud && v > HIGH) loud = true;
+                else if (loud && v < LOW) {
+                    loud = false;
+                    count++;
+                    document.getElementById('pataka-count').innerText = count;
+                }
+                patakaLoop = requestAnimationFrame(tick);
+            };
+            tick();
+
+            patakaTimer = setInterval(() => {
+                time--;
+                timerEl.innerText = time > 0 ? 'のこり: ' + time + '秒' : 'おしまい！ ' + count + '回いえたね！';
+                if (time <= 0) {
+                    stopPataka();
+                    addStars(count);
+                }
+            }, 1000);
+        }
+
+        function addStars(num) {
+            currentStars += num;
+            document.getElementById('total-stars').innerText = currentStars;
+        }
+
+        window.onload = () => {
+            document.querySelectorAll('#group-buttons-container .group-btn').forEach(btn => {
+                btn.onclick = () => changeWordGroup(btn.dataset.group);
+            });
+            document.querySelectorAll('.typing-time-btn').forEach(btn => {
+                btn.onclick = () => setTypingTime(Number(btn.dataset.sec));
+            });
+            document.querySelectorAll('.pataka-target-btn').forEach(btn => {
+                btn.onclick = () => setPatakaTarget(btn.dataset.char);
+            });
+            renderGroupButtons();
+            renderTypingTimeButtons();
+            renderPatakaButtons();
+            renderHiraganaGrid();
+            updateWordDisplay();
+            selectMode('home');
+            showMicAlert(precheckEnvironment());
+        };
+    </script>
+</body>
+</html>
